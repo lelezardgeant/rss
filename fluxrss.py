@@ -33,6 +33,10 @@ def parse_feed(url: str) -> List[dict]:
         elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
             pub_date = datetime(*entry.updated_parsed[:6])
 
+# Nettoyage des caractères spéciaux
+        title = entry.title.encode('utf-8', errors='ignore').decode('utf-8')
+        summary = entry.summary.encode('utf-8', errors='ignore').decode('utf-8') if hasattr(entry, "summary") else ""
+
         articles.append({
             "title": entry.title,
             "link": entry.link,
