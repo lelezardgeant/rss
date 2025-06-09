@@ -35,7 +35,7 @@ def parse_feed(url: str) -> List[dict]:
             pub_date = datetime(*entry.updated_parsed[:6])
 
 # Nettoyage des caractères spéciaux
-	title = html.unescape(entry.title)
+        title = html.unescape(entry.title)
         summary = html.unescape(entry.summary) if hasattr(entry, "summary") else ""
 
 
