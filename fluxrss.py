@@ -4,6 +4,7 @@ import feedparser
 from datetime import datetime
 from typing import List
 import uvicorn
+import html
 
 app = FastAPI()
 
@@ -34,8 +35,9 @@ def parse_feed(url: str) -> List[dict]:
             pub_date = datetime(*entry.updated_parsed[:6])
 
 # Nettoyage des caractères spéciaux
-        title = entry.title.encode('utf-8', errors='ignore').decode('utf-8')
-        summary = entry.summary.encode('utf-8', errors='ignore').decode('utf-8') if hasattr(entry, "summary") else ""
+	title = html.unescape(entry.title)
+        summary = html.unescape(entry.summary) if hasattr(entry, "summary") else ""
+
 
         articles.append({
             "title": entry.title,
