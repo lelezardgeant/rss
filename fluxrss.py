@@ -41,10 +41,10 @@ def parse_feed(url: str) -> List[dict]:
 
 
         articles.append({
-            "title": entry.title,
-            "link": entry.link,
+            "title": html.unescape(entry.title)entry.title,
+            "link": html.unescape(entry.link),
             "published": pub_date.isoformat() if pub_date else None,
-            "summary": entry.summary if hasattr(entry, "summary") else "",
+            "summary": html.unescape(entry.summary) if hasattr(entry, "summary") else "",
         })
     return articles
 
