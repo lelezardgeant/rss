@@ -9,7 +9,7 @@ import html
 
 app = FastAPI()
 
-# Autoriser les requêtes depuis FlutterFlow (cors)
+# Autoriser les requêtes depuis FlutterFlow (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,23 +28,17 @@ def parse_feed(url: str) -> List[dict]:
     feed = feedparser.parse(url)
     articles = []
     for entry in feed.entries:
-        # La date peut être sous plusieurs formats, on essaye de la normaliser
+        # Normalisation de la date
         pub_date = None
         if hasattr(entry, "published_parsed") and entry.published_parsed:
             pub_date = datetime(*entry.published_parsed[:6])
         elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
             pub_date = datetime(*entry.updated_parsed[:6])
 
- # Nettoyage des caractères mal encodés
-        def clean(text):
-            try:
-                return html.unescape(text.encode("latin1").decode("utf-8"))
-            except:
-                return html.unescape(text)
-
-        title = clean(entry.title)
-        summary = clean(entry.summary) if hasattr(entry, "summary") else ""
-        link = clean(entry.link)
+        # Nettoyage des caractères HTML (les accents s'affichent correctement ici)
+        title = html.unescape(entry.title)
+        summary = html.unescape(entry.summary) if hasattr(entry, "summary") else ""
+        link = entry.link
 
         articles.append({
             "title": title,
@@ -70,5 +64,6 @@ def get_news():
     )
     return {"status": "ok", "articles": articles_sorted}
 
+# Pour exécuter localement
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
