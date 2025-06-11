@@ -35,18 +35,24 @@ def parse_feed(url: str) -> List[dict]:
         elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
             pub_date = datetime(*entry.updated_parsed[:6])
 
-# Nettoyage des caractères spéciaux
-        title = html.unescape(entry.title)
-        summary = html.unescape(entry.summary) if hasattr(entry, "summary") else ""
-        link = html.unescape(entry.link)
+ # Nettoyage des caractères mal encodés
+        def clean(text):
+            try:
+                return html.unescape(text.encode("latin1").decode("utf-8"))
+            except:
+                return html.unescape(text)
 
+        title = clean(entry.title)
+        summary = clean(entry.summary) if hasattr(entry, "summary") else ""
+        link = clean(entry.link)
 
         articles.append({
-            "title": entry.title,
-            "link": entry.link,
+            "title": title,
+            "link": link,
             "published": pub_date.isoformat() if pub_date else None,
-            "summary": entry.summary if hasattr(entry, "summary") else "",
+            "summary": summary,
         })
+
     return articles
 
 @app.get("/news")
