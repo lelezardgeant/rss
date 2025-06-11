@@ -38,13 +38,14 @@ def parse_feed(url: str) -> List[dict]:
 # Nettoyage des caractères spéciaux
         title = html.unescape(entry.title)
         summary = html.unescape(entry.summary) if hasattr(entry, "summary") else ""
+        link = html.unescape(entry.link)
 
 
         articles.append({
-            "title": html.unescape(entry.title)entry.title,
-            "link": html.unescape(entry.link),
+            "title": entry.title,
+            "link": entry.link,
             "published": pub_date.isoformat() if pub_date else None,
-            "summary": html.unescape(entry.summary) if hasattr(entry, "summary") else "",
+            "summary": entry.summary if hasattr(entry, "summary") else "",
         })
     return articles
 
