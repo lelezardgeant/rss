@@ -36,12 +36,12 @@ def parse_feed(url: str) -> List[dict]:
         elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
             pub_date = datetime(*entry.updated_parsed[:6])
 
-        # Nettoyage des caractères HTML et respect de l'encodage
+        # Nettoyage du texte et des accents
         title = html.unescape(entry.title).strip()
         summary = html.unescape(entry.summary).strip() if hasattr(entry, "summary") else ""
         link = entry.link
 
-        # Format de date en JJ/MM/AAAA HH:MM
+        # Format de date : JJ/MM/AAAA HH:MM
         formatted_date = pub_date.strftime("%d/%m/%Y %H:%M") if pub_date else None
 
         articles.append({
@@ -59,8 +59,19 @@ def get_news():
     for url in RSS_FEEDS:
         all_articles.extend(parse_feed(url))
 
-    # Supprimer les articles sans date et trier du plus récent au plus ancien
+    # Supprimer les articles sans date et trier par date décroissante
     articles_with_date = [a for a in all_articles if a["published"]]
     articles_sorted = sorted(
         articles_with_date,
-        key=lambda x: datetime.strptime(x["published"], "%d/%m/%Y %
+        key=lambda x: datetime.strptime(x["published"], "%d/%m/%Y %H:%M"),
+        reverse=True,
+    )
+
+    return JSONResponse(
+        content={"status": "ok", "articles": articles_sorted},
+        media_type="application/json; charset=utf-8"
+    )
+
+# Pour exécuter localement
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
