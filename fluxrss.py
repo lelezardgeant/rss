@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import feedparser
 from datetime import datetime
 from typing import List
@@ -29,22 +28,24 @@ def parse_feed(url: str) -> List[dict]:
     feed = feedparser.parse(url)
     articles = []
     for entry in feed.entries:
-        # Normalisation de la date
         pub_date = None
         if hasattr(entry, "published_parsed") and entry.published_parsed:
             pub_date = datetime(*entry.published_parsed[:6])
         elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
             pub_date = datetime(*entry.updated_parsed[:6])
 
-        # Nettoyage des caractères HTML (les accents s'affichent correctement ici)
+        # Nettoyage des caractères HTML
         title = html.unescape(entry.title)
         summary = html.unescape(entry.summary) if hasattr(entry, "summary") else ""
         link = entry.link
 
+        # Format de date en JJ/MM/AAAA HH:MM (texte directement utilisable)
+        formatted_date = pub_date.strftime("%d/%m/%Y %H:%M") if pub_date else None
+
         articles.append({
             "title": title,
             "link": link,
-            "published": pub_date.isoformat() if pub_date else None,
+            "published": formatted_date,  # <-- date déjà formatée
             "summary": summary,
         })
 
@@ -56,19 +57,15 @@ def get_news():
     for url in RSS_FEEDS:
         all_articles.extend(parse_feed(url))
 
-    # Supprimer les articles sans date et trier par date décroissante
+    # Supprimer les articles sans date et trier par date décroissante (non formatée)
     articles_with_date = [a for a in all_articles if a["published"]]
     articles_sorted = sorted(
         articles_with_date,
-        key=lambda x: x["published"],
+        key=lambda x: datetime.strptime(x["published"], "%d/%m/%Y %H:%M"),
         reverse=True,
     )
 
-    # ✅ Retour explicite avec encodage UTF-8
-    return JSONResponse(
-        content={"status": "ok", "articles": articles_sorted},
-        media_type="application/json; charset=utf-8"
-    )
+    return {"status": "ok", "articles": articles_sorted}
 
 # Pour exécuter localement
 if __name__ == "__main__":
