@@ -1,7 +1,7 @@
+J'ai crée un ceci:
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import feedparser
 from datetime import datetime
 from typing import List
@@ -63,12 +63,7 @@ def get_news():
         key=lambda x: x["published"],
         reverse=True,
     )
-
-    # ✅ Retour explicite avec encodage UTF-8
-    return JSONResponse(
-        content={"status": "ok", "articles": articles_sorted},
-        media_type="application/json; charset=utf-8"
-    )
+    return {"status": "ok", "articles": articles_sorted}
 
 # Pour exécuter localement
 if __name__ == "__main__":
