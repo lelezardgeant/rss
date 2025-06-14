@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import List
 import uvicorn
 import html
+import re
 
 app = FastAPI()
 
@@ -25,41 +26,72 @@ RSS_FEEDS = [
     "https://www.rfi.fr/fr/rss",
 ]
 
+# Fonction pour récupérer l’image associée à un article
+def extract_image(entry):
+    # 1. media:content
+    if "media_content" in entry:
+        for media in entry.media_content:
+            if "url" in media:
+                return media["url"]
+
+    # 2. media:thumbnail
+    if "media_thumbnail" in entry:
+        for thumb in entry.media_thumbnail:
+            if "url" in thumb:
+                return thumb["url"]
+
+    # 3. image.href
+    if hasattr(entry, "image") and hasattr(entry.image, "href"):
+        return entry.image.href
+
+    # 4. liens avec type image
+    if "links" in entry:
+        for link in entry.links:
+            if link.get("type", "").startswith("image") and "href" in link:
+                return link["href"]
+
+    # 5. fallback : chercher une image dans le résumé HTML
+    if hasattr(entry, "summary"):
+        img_match = re.search(r'<img[^>]+src="([^">]+)"', entry.summary)
+        if img_match:
+            return img_match.group(1)
+
+    return None
+
+# Traitement des flux RSS
 def parse_feed(url: str) -> List[dict]:
     feed = feedparser.parse(url)
     articles = []
     for entry in feed.entries:
-        # Normalisation de la date
         pub_date = None
         if hasattr(entry, "published_parsed") and entry.published_parsed:
             pub_date = datetime(*entry.published_parsed[:6])
         elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
             pub_date = datetime(*entry.updated_parsed[:6])
 
-        # Nettoyage du texte et des accents
         title = html.unescape(entry.title).strip()
         summary = html.unescape(entry.summary).strip() if hasattr(entry, "summary") else ""
         link = entry.link
-
-        # Format de date : JJ/MM/AAAA HH:MM
         formatted_date = pub_date.strftime("%d/%m/%Y %H:%M") if pub_date else None
+        image_url = extract_image(entry)
 
         articles.append({
             "title": title,
             "link": link,
             "published": formatted_date,
             "summary": summary,
+            "image": image_url,
         })
 
     return articles
 
+# Endpoint principal
 @app.get("/news")
 def get_news():
     all_articles = []
     for url in RSS_FEEDS:
         all_articles.extend(parse_feed(url))
 
-    # Supprimer les articles sans date et trier par date décroissante
     articles_with_date = [a for a in all_articles if a["published"]]
     articles_sorted = sorted(
         articles_with_date,
