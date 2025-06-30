@@ -19,28 +19,22 @@ app.add_middleware(
 )
 
 RSS_FEEDS = [
-    "https://rss.lemonde.fr/c/205/f/3050/index.rss",
-    "https://www.france24.com/fr/rss",
-    "https://www.rfi.fr/fr/rss",
     "https://www.lequipe.fr/rss/actu_rss.xml",
     "https://www.humanite.fr/rss.xml",
-    "https://www.monde-diplomatique.fr/rss/une.xml",
-    "https://www.liberation.fr/rss/",
+    "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml",
     "https://www.lexpress.fr/feeds/rss/",
-    "https://www.leparisien.fr/rss.xml",
+    "https://feeds.leparisien.fr/leparisien/rss",
     "https://www.lefigaro.fr/rss/figaro_actualites.xml",
     "https://www.la-croix.com/rss",
     "https://www.marianne.net/rss.xml",
-    "https://www.francetvinfo.fr/titres.rss",
+    "https://www.franceinfo.fr/titres.rss",
     "https://www.lepoint.fr/rss.xml",
-    "https://www.mediapart.fr/rss/flux.xml",
-    "https://www.liberation.fr/rss/",
+    "https://www.mediapart.fr/fr/journal/mot-cle/flux-rss",
     "https://www.20minutes.fr/rss/",
     "https://www.courrierinternational.com/feed",
     "https://www.nouvelobs.com/rss.xml",
     "https://www.lesechos.fr/rss/rss_general.xml",
-    "https://www.blast.info/rss.xml",
-    "https://www.bfmtv.com/rss/info/flux-rss/",
+    "https://www.bfmtv.com/rss/news-24-7/",
     "https://www.lci.fr/rss/",
 ]
 
