@@ -72,13 +72,13 @@ def parse_feed(url: str) -> List[dict]:
         title = html.unescape(entry.title).strip()
         summary = html.unescape(entry.summary).strip() if hasattr(entry, "summary") else ""
         link = entry.link
-        formatted_date = pub_date.strftime("%d/%m/%Y %H:%M") if pub_date else None
+        iso_date = pub_date.isoformat() if pub_date else None
         image_url = extract_image(entry)
 
         articles.append({
             "title": title,
             "link": link,
-            "published": formatted_date,
+            "published": iso_date,
             "summary": summary,
             "image": image_url,
         })
@@ -95,7 +95,7 @@ def get_news():
     articles_with_date = [a for a in all_articles if a["published"]]
     articles_sorted = sorted(
         articles_with_date,
-        key=lambda x: datetime.strptime(x["published"], "%d/%m/%Y %H:%M"),
+        key=lambda x: datetime.fromisoformat(x["published"]),
         reverse=True,
     )
 
