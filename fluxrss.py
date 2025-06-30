@@ -88,7 +88,7 @@ def parse_feed(url: str) -> List[dict]:
     return articles
 
 @app.get("/news")
-def get_news(skip: int = Query(0, ge=0), limit: int = Query(10, gt=0)):
+def get_news(skip: int = Query(0, ge=0), limit: int = Query(50, gt=0)):
     all_articles = []
     for url in RSS_FEEDS:
         all_articles.extend(parse_feed(url))
