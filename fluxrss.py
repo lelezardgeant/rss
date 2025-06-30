@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import feedparser
@@ -83,12 +83,12 @@ def parse_feed(url: str) -> List[dict]:
             "published": pub_date.isoformat() if pub_date else None,
             "summary": summary,
             "image": image_url,
-            "display_date": display_date,   # <-- La date formatée côté backend
+            "display_date": display_date,
         })
     return articles
 
 @app.get("/news")
-def get_news():
+def get_news(skip: int = Query(0, ge=0), limit: int = Query(10, gt=0)):
     all_articles = []
     for url in RSS_FEEDS:
         all_articles.extend(parse_feed(url))
@@ -100,8 +100,16 @@ def get_news():
         reverse=True,
     )
 
+    paged_articles = articles_sorted[skip:skip + limit]
+
     return JSONResponse(
-        content={"status": "ok", "articles": articles_sorted},
+        content={
+            "status": "ok",
+            "articles": paged_articles,
+            "total": len(articles_sorted),
+            "skip": skip,
+            "limit": limit
+        },
         media_type="application/json; charset=utf-8"
     )
 
