@@ -11,7 +11,6 @@ import re
 
 app = FastAPI()
 
-# Autoriser les requêtes depuis FlutterFlow (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -74,7 +73,6 @@ def parse_feed(url: str) -> List[dict]:
         summary = html.unescape(entry.summary).strip() if hasattr(entry, "summary") else ""
         link = entry.link
         image_url = extract_image(entry)
-
         display_date = human_readable_date(pub_date) if pub_date else ""
 
         articles.append({
@@ -88,7 +86,7 @@ def parse_feed(url: str) -> List[dict]:
     return articles
 
 @app.get("/news")
-def get_news(skip: int = Query(0, ge=0), limit: int = Query(50, gt=0)):
+def get_news(skip: int = Query(0), limit: int = Query(200)):
     all_articles = []
     for url in RSS_FEEDS:
         all_articles.extend(parse_feed(url))
@@ -100,16 +98,11 @@ def get_news(skip: int = Query(0, ge=0), limit: int = Query(50, gt=0)):
         reverse=True,
     )
 
-    paged_articles = articles_sorted[skip:skip + limit]
+    # appliquer le skip/limit
+    limited_articles = articles_sorted[skip:skip+limit]
 
     return JSONResponse(
-        content={
-            "status": "ok",
-            "articles": paged_articles,
-            "total": len(articles_sorted),
-            "skip": skip,
-            "limit": limit
-        },
+        content={"status": "ok", "articles": limited_articles},
         media_type="application/json; charset=utf-8"
     )
 
