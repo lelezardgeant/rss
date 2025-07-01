@@ -18,25 +18,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-RSS_FEEDS = [
-    "https://www.lequipe.fr/rss/actu_rss.xml",
-    "https://www.humanite.fr/rss.xml",
-    "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml",
-    "https://www.lexpress.fr/feeds/rss/",
-    "https://feeds.leparisien.fr/leparisien/rss",
-    "https://www.lefigaro.fr/rss/figaro_actualites.xml",
-    "https://www.la-croix.com/rss",
-    "https://www.marianne.net/rss.xml",
-    "https://www.franceinfo.fr/titres.rss",
-    "https://www.lepoint.fr/rss.xml",
-    "https://www.mediapart.fr/fr/journal/mot-cle/flux-rss",
-    "https://www.20minutes.fr/rss/",
-    "https://www.courrierinternational.com/feed",
-    "https://www.nouvelobs.com/rss.xml",
-    "https://www.lesechos.fr/rss/rss_general.xml",
-    "https://www.bfmtv.com/rss/news-24-7/",
-    "https://www.lci.fr/rss/",
-]
+FEEDS_URLS = {
+    "lequipe": "https://www.lequipe.fr/rss/actu_rss.xml",
+    "humanite": "https://www.humanite.fr/rss.xml",
+    "liberation": "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml",
+    "lexpress": "https://www.lexpress.fr/feeds/rss/",
+    "leparisien": "https://feeds.leparisien.fr/leparisien/rss",
+    "lefigaro": "https://www.lefigaro.fr/rss/figaro_actualites.xml",
+    "lacroix": "https://www.la-croix.com/rss",
+    "marianne": "https://www.marianne.net/rss.xml",
+    "franceinfo": "https://www.franceinfo.fr/titres.rss",
+    "lepoint": "https://www.lepoint.fr/rss.xml",
+    "mediapart": "https://www.mediapart.fr/fr/journal/mot-cle/flux-rss",
+    "20minutes": "https://www.20minutes.fr/rss/",
+    "courrierinternational": "https://www.courrierinternational.com/feed",
+    "nouvelobs": "https://www.nouvelobs.com/rss.xml",
+    "lesechos": "https://www.lesechos.fr/rss/rss_general.xml",
+    "bfmtv": "https://www.bfmtv.com/rss/news-24-7/",
+    "lci": "https://www.lci.fr/rss/",
+}
 
 def extract_image(entry):
     if "media_content" in entry:
@@ -73,7 +73,7 @@ def human_readable_date(pub_date: datetime) -> str:
     else:
         return pub_date.strftime("%d/%m/%Y")
 
-def parse_feed(url: str) -> List[dict]:
+def parse_feed(url: str, source: str) -> List[dict]:
     feed = feedparser.parse(url)
     articles = []
     for entry in feed.entries:
@@ -96,14 +96,15 @@ def parse_feed(url: str) -> List[dict]:
             "summary": summary,
             "image": image_url,
             "display_date": display_date,
+            "source": source,
         })
     return articles
 
 @app.get("/news")
 def get_news(skip: int = Query(0), limit: int = Query(200)):
     all_articles = []
-    for url in RSS_FEEDS:
-        all_articles.extend(parse_feed(url))
+    for source, url in FEEDS_URLS.items():
+        all_articles.extend(parse_feed(url, source))
 
     articles_with_date = [a for a in all_articles if a["published"]]
     articles_sorted = sorted(
@@ -112,7 +113,6 @@ def get_news(skip: int = Query(0), limit: int = Query(200)):
         reverse=True,
     )
 
-    # appliquer le skip/limit
     limited_articles = articles_sorted[skip:skip+limit]
 
     return JSONResponse(
