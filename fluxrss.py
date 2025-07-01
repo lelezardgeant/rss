@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import feedparser
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 import uvicorn
 import html
 import re
@@ -18,7 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-FEEDS_URLS = {
+# Dictionnaire : nom source -> url du flux RSS
+RSS_FEEDS = {
     "lequipe": "https://www.lequipe.fr/rss/actu_rss.xml",
     "humanite": "https://www.humanite.fr/rss.xml",
     "liberation": "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml",
@@ -39,6 +39,7 @@ FEEDS_URLS = {
 }
 
 def extract_image(entry):
+    # (même code que avant, inchangé)
     if "media_content" in entry:
         for media in entry.media_content:
             if "url" in media:
@@ -73,7 +74,7 @@ def human_readable_date(pub_date: datetime) -> str:
     else:
         return pub_date.strftime("%d/%m/%Y")
 
-def parse_feed(url: str, source: str) -> List[dict]:
+def parse_feed(source_name: str, url: str) -> List[dict]:
     feed = feedparser.parse(url)
     articles = []
     for entry in feed.entries:
@@ -96,15 +97,28 @@ def parse_feed(url: str, source: str) -> List[dict]:
             "summary": summary,
             "image": image_url,
             "display_date": display_date,
-            "source": source,
+            "source": source_name,
         })
     return articles
 
 @app.get("/news")
-def get_news(skip: int = Query(0), limit: int = Query(200)):
+def get_news(
+    skip: int = Query(0), 
+    limit: int = Query(200),
+    sources: Optional[List[str]] = Query(None, description="Liste des sources à inclure")
+):
     all_articles = []
-    for source, url in FEEDS_URLS.items():
-        all_articles.extend(parse_feed(url, source))
+    
+    # Si sources est vide ou None, on prend tout
+    if sources:
+        # Normaliser les noms en minuscules
+        sources = [s.lower() for s in sources]
+        filtered_feeds = {k: v for k, v in RSS_FEEDS.items() if k in sources}
+    else:
+        filtered_feeds = RSS_FEEDS
+    
+    for source_name, url in filtered_feeds.items():
+        all_articles.extend(parse_feed(source_name, url))
 
     articles_with_date = [a for a in all_articles if a["published"]]
     articles_sorted = sorted(
